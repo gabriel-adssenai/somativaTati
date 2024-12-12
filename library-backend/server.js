@@ -1,11 +1,18 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const path = require('path');
 
-// Inicialização do app
 const app = express();
-app.use(cors());
+app.use(cors({
+    origin: 'http://localhost:8080', // Substitua com a URL correta do seu frontend
+    methods: ['GET', 'POST', 'PUT', 'DELETE'], // Adicione os métodos que você está utilizando
+  }));
+
 app.use(express.json());
+
+// Servir arquivos estáticos da pasta 'uploads' (para acessar as imagens via URL)
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Conexão ao MongoDB
 mongoose

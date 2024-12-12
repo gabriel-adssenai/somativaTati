@@ -1,9 +1,10 @@
 <template>
     <div class="book-list-container">
       <!-- Contêiner para a lista de livros -->
-      <ul class="book-list">
+      <ul class="book-list" v-if="books.length">
         <!-- Para cada livro na lista, cria um item de lista correspondente -->
         <li v-for="book in books" :key="book._id" class="book-item">
+          <img :src="book.image ? `http://localhost:3000${book.image}` : ''" alt="Capa do livro" v-if="book.image" class="book-cover" />
           <!-- Mostra o título, autor e ano de publicação do livro -->
           <span>{{ book.title }} - {{ book.author }} ({{ book.year }})</span>
           <!-- Botão que aciona a função para editar o livro -->
@@ -26,11 +27,16 @@
       };
     },
     methods: {
-      fetchBooks() { // Método que busca os livros do servidor
-        api.getBooks().then(response => {
-          this.books = response.data; // Atualiza a lista de livros com os dados recebidos
+      fetchBooks() {
+      api.getBooks()
+        .then(response => {
+          console.log('Livros retornados:', response.data);
+          this.books = response.data; // Atualiza a lista de livros com o retorno da API
+        })
+        .catch(error => {
+          console.error('Erro ao buscar livros:', error);
         });
-      },
+    },
       deleteBook(id) { // Método que exclui um livro com base em seu ID
         api.deleteBook(id).then(() => {
           this.fetchBooks(); // Recarrega a lista de livros após a exclusão
@@ -117,5 +123,15 @@
     background-color: #e40055; /* Cor de fundo ao passar o mouse no botão de excluir */
     transform: scale(1.05); /* Aumenta o botão ao passar o mouse */
   }
+
+  .book-cover{
+  width: 120px; /* Largura fixa */
+  height: 180px; /* Altura fixa */
+  object-fit: cover; /* Garante que a imagem cubra completamente o espaço sem distorcer */
+  border-radius: 8px; /* Borda arredondada */
+  border: 3px solid #2b2d42; /* Borda de cor escura para destaque */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra suave ao redor da capa do livro */
+}
+
   </style>
   

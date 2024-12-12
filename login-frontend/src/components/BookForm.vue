@@ -9,6 +9,14 @@
         <!-- Campo de entrada para o ano de publicação -->
         <input class="input-field" v-model="book.year" placeholder="Ano" required />
         <!-- Botão de submissão, alterando o texto conforme se está adicionando ou editando -->
+
+        <label for="file-upload" class="file-upload-label">Imagem do livro:</label>
+        <!-- Input escondido -->
+        <input type="file" id="file-upload" @change="handleFileChange" class="file-input-hidden" />
+        <!-- Botão estilizado -->
+        <label for="file-upload" class="custom-file-upload">
+          {{ selectedImage ? selectedImage.name : "Selecione uma imagem" }}
+        </label>
         <button class="submit-button" type="submit">{{ book._id ? 'Atualizar' : 'Adicionar' }}</button>
       </form>
     </div>
@@ -23,36 +31,66 @@
     props: ['bookToEdit'], 
     data() {
       return {
-        // Inicializa o estado do livro, usando o livro recebido via prop ou um objeto vazio
-        book: this.bookToEdit || { title: '', author: '', year: null }, 
-      };
+      book: this.bookToEdit || { title: '', author: '', year: null, image: null, _id: null },
+      selectedImage: null, // Variável para armazenar a imagem selecionada
+      imageChosen: false, // Controle do estado de imagem escolhida
+    };
     },
     watch: {
       // Monitora alterações na propriedade bookToEdit
       bookToEdit: {
         immediate: true, // Executa a função assim que o componente for montado
-        handler(newVal) {
-          // Atualiza o estado do livro sempre que a prop mudar
-          this.book = newVal || { title: '', author: '', year: null }; 
+        handler(newValue) {
+          if (newValue) {
+          this.book = { ...newValue }; // Atualiza os dados do livro para edição
+        } else {
+          this.resetForm(); // Se não houver livro para editar, reseta o formulário
+        }
         },
       },
     },
     methods: {
+      handleFileChange(event) {
+      this.selectedImage = event.target.files[0]; // Armazena a imagem selecionada
+      this.imageChosen = !!this.selectedImage; // Marca a imagem como escolhida se houver
+    },
       handleSubmit() {
-        // Verifica se o livro já tem um ID para definir se é uma atualização ou adição
-        if (this.book._id) {
-          api.updateBook(this.book._id, this.book).then(() => {
-            // Dispara um evento ao atualizar o livro
-            this.$emit('book-updated'); 
-          });
-        } else {
-          // Caso não tenha um ID, adiciona um novo livro
-          api.addBook(this.book).then(() => {
-            // Dispara um evento ao adicionar um novo livro
-            this.$emit('book-added'); 
-          });
-        }
-      },
+      const formData = new FormData();
+      formData.append('title', this.book.title);
+      formData.append('author', this.book.author);
+      formData.append('year', this.book.year);
+
+      // Se uma imagem foi selecionada, adiciona ao FormData
+      if (this.selectedImage) {
+        formData.append('image', this.selectedImage);
+      }
+
+      // Verifica se o livro tem um _id (para atualização) ou se é um novo livro
+      if (this.book._id) {
+        api.updateBook(this.book._id, formData).then(() => {
+          this.$emit('book-updated'); // Emite evento após atualização
+          this.resetForm(); // Reseta o formulário
+        });
+      } else {
+        // Caso não tenha um ID, adiciona um novo livro
+        api.addBook(formData).then(() => {
+          this.$emit('book-added'); // Emite evento após adicionar
+          this.resetForm(); // Reseta o formulário
+        });
+      }
+    },
+    // Função para resetar os dados do formulário
+    resetForm() {
+      this.book = {
+        title: '',
+        author: '',
+        year: null,
+        image: null,
+        _id: null,
+      };
+      this.selectedImage = null; // Reseta a imagem selecionada
+      this.imageChosen = false; // Reseta o estado de imagem escolhida
+    },
     },
   };
   </script>  
